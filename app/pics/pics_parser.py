@@ -41,12 +41,19 @@ class PICSParser:
     @classmethod
     async def parse(cls, file: IO) -> PICSCluster:
         """Parse PICS XML using the sdk container by getting the command string from parse_pics_command"""
-        from test_collections.matter.sdk_tests.support.pics import parse_pics_command, PICS_FILE_PATH
-        from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
         from json import loads
         from pathlib import Path
 
-        TMP_PICS_PATH = Path(PICS_FILE_PATH+f"{id(file)}.xml")
+        from test_collections.matter.sdk_tests.support.exec_run_in_container import (
+            ExecResultExtended,
+        )
+        from test_collections.matter.sdk_tests.support.pics import (
+            PICS_FILE_PATH,
+            parse_pics_command,
+        )
+        from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
+
+        TMP_PICS_PATH = Path(PICS_FILE_PATH + f"{id(file)}.xml")
 
         sdk_container = SDKContainer()
         await sdk_container.start()
@@ -59,7 +66,7 @@ class PICSParser:
             # make a local copy of the file contents
             content = file.read()
             if isinstance(content, str):
-                content = content.encode('utf-8')
+                content = content.encode("utf-8")
             with open(TMP_PICS_PATH, "wb") as outfile:
                 outfile.write(content)
 
@@ -67,7 +74,7 @@ class PICSParser:
             prefix, cmd = parse_pics_command(TMP_PICS_PATH)
             logger.debug(f"Executing command: {prefix} {cmd}")
 
-            result = sdk_container.send_command(
+            result: ExecResultExtended = sdk_container.send_command(
                 command=cmd, prefix=prefix
             )
 
@@ -79,12 +86,13 @@ class PICSParser:
                 raise PICSError(
                     f"Parser failed to read file: {result.output.decode('utf-8')}"
                 )
-            output: str = result.output.decode('utf-8')
+            output: str = result.output.decode("utf-8")
             logger.debug(f"Command result: {output}")
 
             raw_dict: dict[str, bool] = loads(output)
-            pics_dict: dict[str, PICSItem] = {k: PICSItem(
-                number=k, enabled=v) for k, v in raw_dict.items()}
+            pics_dict: dict[str, PICSItem] = {
+                k: PICSItem(number=k, enabled=v) for k, v in raw_dict.items()
+            }
             return PICSCluster(name=cluster_name, items=pics_dict)
         finally:
             sdk_container.destroy()

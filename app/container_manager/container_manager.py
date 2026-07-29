@@ -206,7 +206,8 @@ class ContainerManager(object, metaclass=Singleton):
                 logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
             tar_stream = io.BytesIO()
-            # tarfile.open can handle regular files, but `getmembers` will fail for non-archives
+            # tarfile.open can handle regular files, but `getmembers`
+            # will fail for non-archives
             with tarfile.open(f"{host_file_path}", mode="r") as tar_in:
                 with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
                     for member in tar_in.getmembers():
