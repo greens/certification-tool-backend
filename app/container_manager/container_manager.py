@@ -206,6 +206,7 @@ class ContainerManager(object, metaclass=Singleton):
                 logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
             tar_stream = io.BytesIO()
+            # tarfile.open can handle regular files, but `getmembers` will fail for non-archives
             with tarfile.open(f"{host_file_path}", mode="r") as tar_in:
                 with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
                     for member in tar_in.getmembers():
@@ -225,39 +226,40 @@ class ContainerManager(object, metaclass=Singleton):
             raise
 
     def copy_file_to_container(
-            self,
-            container: Container,
-            host_file_path: Path,
-            destination_container_path: Path,
-        ) -> None:
-            try:
-                if settings.ENABLE_CONTAINER_LOGS:
-                    logger.info(
-                        "### File Copy: HOST->CONTAINER"
-                        f" From Host Path: {str(host_file_path)}"
-                        f" To Container Path: {destination_container_path}"
-                        f" Container Name: {str(container.name)}"
-                    )
+        self,
+        container: Container,
+        host_file_path: Path,
+        destination_container_path: Path,
+    ) -> None:
+        try:
+            if settings.ENABLE_CONTAINER_LOGS:
+                logger.info(
+                    "### File Copy: HOST->CONTAINER"
+                    f" From Host Path: {str(host_file_path)}"
+                    f" To Container Path: {destination_container_path}"
+                    f" Container Name: {str(container.name)}"
+                )
 
-                    shell_cmd = docker_cp_to_container_command(
-                        container.name, host_file_path, destination_container_path
-                    )
-                    logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
+                shell_cmd = docker_cp_to_container_command(
+                    container.name, host_file_path, destination_container_path
+                )
+                logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
-                tar_stream = io.BytesIO()
+            tar_stream = io.BytesIO()
 
-                with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
-                    tar_out.add(host_file_path, arcname=host_file_path.name)
+            with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
+                tar_out.add(host_file_path, arcname=destination_container_path.name)
 
-                # Prepare the tar file
-                tar_stream.seek(0)
-                container.put_archive(f"{destination_container_path.parent}", tar_stream)
+            # Prepare the tar file
+            tar_stream.seek(0)
+            container.put_archive(f"{destination_container_path.parent}", tar_stream)
 
-            except docker.errors.APIError as e:
-                logger.error(f"Error while accessing the Docker API: {e}")
-                raise
-            except Exception as e:
-                logger.error(f"Unexpected error: {e}")
-                raise
+        except docker.errors.APIError as e:
+            logger.error(f"Error while accessing the Docker API: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise
+
 
 container_manager: ContainerManager = ContainerManager()

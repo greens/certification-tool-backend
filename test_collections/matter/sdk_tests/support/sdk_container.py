@@ -221,13 +221,6 @@ class SDKContainer(metaclass=Singleton):
             container_manager.destroy(self.__container)
         self.__container = None
 
-    async def __aenter__(self):
-        await self.start()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.destroy()
-
     def send_command(
         self,
         command: Union[str, list],

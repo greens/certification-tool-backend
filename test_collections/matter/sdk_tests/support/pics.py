@@ -62,14 +62,15 @@ def set_pics_command(pics: PICS) -> tuple[str, str]:
 
     return (prefix, cmd)
 
-def parse_pics_command() -> tuple[str, str]:
+
+def parse_pics_command(tmp_file_name) -> tuple[str, str]:
     prefix = f"{PYTHON_COMMAND} {PYTHON_OPTION}"
     PARSE_PICS_MINI_SCRIPT = f"""
 import importlib
 import json
 pics_util = importlib.import_module('{PICS_PARSER_DOCKER_PATH}'.replace('/','.'))
 
-pics = pics_util.parse_pics_xml(open('{PICS_FILE_PATH}'+'.xml').read())
+pics = pics_util.parse_pics_xml(open('{tmp_file_name}').read())
 print(json.dumps(pics))
 """
 
