@@ -100,8 +100,8 @@ def _parse_python_script_to_test_case_declarations(
 
 
 class CollectionType(Enum):
-    NON_MANDATORY = (0,)
-    MANDATORY = (1,)
+    NON_MANDATORY = 0
+    MANDATORY = 1
     ALL = 2
 
 
